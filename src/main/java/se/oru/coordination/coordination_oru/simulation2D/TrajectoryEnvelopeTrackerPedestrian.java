@@ -16,6 +16,7 @@ import se.oru.coordination.coordination_oru.AbstractTrajectoryEnvelopeTracker;
 import se.oru.coordination.coordination_oru.RobotReport;
 import se.oru.coordination.coordination_oru.TrackingCallback;
 import se.oru.coordination.coordination_oru.TrajectoryEnvelopeCoordinator;
+import se.oru.coordination.coordination_oru.util.ColorPrint;
 
 public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvelopeTracker implements Runnable {
 
@@ -45,8 +46,7 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 		this.pedestrianTraj = pedestrianTraj;
 		this.currentPose = pedestrianTraj.getPoses().get(0);
 		this.totalDistance = this.computeDistance(0, traj.getPose().length-1);
-		this.overallDistance = totalDistance;
-		this.positionToStop = this.computeCurrentDistanceFromStart();
+		this.positionToStop = this.totalDistance;
 		this.th = new Thread(this, "Pedestrian tracker " + te.getComponent());
 		this.th.setPriority(Thread.MAX_PRIORITY);
 	}
@@ -54,7 +54,6 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 	@Override
 	public void onTrajectoryEnvelopeUpdate(TrajectoryEnvelope te) {
 		this.totalDistance = this.computeDistance(0, traj.getPose().length-1);
-		this.overallDistance = totalDistance;
 	}
 	
 	@Override
@@ -136,23 +135,6 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 	public RobotReport getRobotReport() {
 		if (this.currentPose == null) return null;
 		if (!this.th.isAlive()) return new RobotReport(te.getRobotID(), traj.getPose()[0], -1, 0.0, 0.0, -1);
-//		Pose pose = null;
-//		double accumulatedDist = 0.0;
-//		Pose[] poses = traj.getPose();
-//		for (int i = 0; i < poses.length-1; i++) {
-//			double deltaS = poses[i].distanceTo(poses[i+1]);
-//			accumulatedDist += deltaS;
-//			if (accumulatedDist > state.getPosition()) {
-//				double ratio = 1.0-(accumulatedDist-state.getPosition())/deltaS;
-//				pose = poses[i].interpolate(poses[i+1], ratio);
-//				currentPathIndex = i;
-//				break;
-//			}
-//		}
-//		if (currentPathIndex == -1) {
-//			currentPathIndex = poses.length-1;
-//			pose = poses[currentPathIndex];
-//		}
 		return new RobotReport(te.getRobotID(), this.currentPose, this.currentPathIndex, this.currentSpeed, this.computeCurrentDistanceFromStart(), this.criticalPoint);
 	}
 
@@ -182,7 +164,7 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 		this.currentSpeed = this.pedestrianTraj.getSpeed(index);
 		
 		// Motion is over. 
-		if(index == this.pedestrianTraj.size()) { 
+		if(index == this.pedestrianTraj.size() - 1) { 
 			this.currentPose = this.pedestrianTraj.getPose(index);
 			return;
 		}
@@ -213,6 +195,7 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 					//set state to final position, just in case it didn't quite get there (it's certainly close enough)
 					this.currentPose = this.pedestrianTraj.getPoses().get(this.pedestrianTraj.getPoses().size()-1);
 					onPositionUpdate();
+					ColorPrint.info("Tracking stops now.");
 					break;
 				}
 								
@@ -265,7 +248,8 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 
 	@Override
 	public long getCurrentTimeInMillis() {
-		return Calendar.getInstance().getTimeInMillis();
+		return this.tec.getCurrentTimeInMillis();
+		//return Calendar.getInstance().getTimeInMillis();
 	}
 
 }

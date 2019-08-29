@@ -72,10 +72,10 @@ public class MultiplePedestriansAndRobot {
 		int nums[] = {112, 146, 160, 29, 30, 55, 5, 77, 97};
 		
 		//JTSDrawingPanelVisualization viz = new JTSDrawingPanelVisualization();
-		RVizVisualization viz = new RVizVisualization();
-		RVizVisualization.writeRVizConfigFile(nums);
-		//BrowserVisualization viz = new BrowserVisualization();
-		//viz.setInitialTransform(39, -1.8, 1.4);
+		//RVizVisualization viz = new RVizVisualization();
+		//RVizVisualization.writeRVizConfigFile(nums);
+		BrowserVisualization viz = new BrowserVisualization();
+		viz.setInitialTransform(39, -1.8, 1.4);
 		tec.setVisualization(viz);
 
 		for(int i = 0; i < nums.length; i++) {
