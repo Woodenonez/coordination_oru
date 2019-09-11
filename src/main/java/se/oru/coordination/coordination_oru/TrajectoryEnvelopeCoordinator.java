@@ -619,6 +619,18 @@ public abstract class TrajectoryEnvelopeCoordinator {
 		}
 	}
 
+	public double getRobotStoppageTime(int robotID) {
+		return trackers.get(robotID).getStoppageTime();
+	}
+
+	public double getTotalStoppageTime() {
+		double totalStoppageTime = 0.0;
+		for(HashMap.Entry<Integer, AbstractTrajectoryEnvelopeTracker> tracker : trackers.entrySet()) {
+			totalStoppageTime += tracker.getValue().getStoppageTime();
+		}
+		return totalStoppageTime;
+	}
+
 	/**
 	 * Get the {@link FleetVisualization} that is used for displaying the current fleet.
 	 * @return The {@link FleetVisualization} that is used for displaying the current fleet.

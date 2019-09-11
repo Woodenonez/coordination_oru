@@ -27,6 +27,7 @@ public abstract class TrajectoryEnvelopeTrackerRK4 extends AbstractTrajectoryEnv
 	protected double totalDistance = 0.0;
 	protected double positionToSlowDown = -1.0;
 	protected double elapsedTrackingTime = 0.0;
+	protected double stoppageTime = 0.0;
 	private Thread th = null;
 	protected State state = null;
 	protected double[] curvatureDampening = null;
@@ -38,6 +39,9 @@ public abstract class TrajectoryEnvelopeTrackerRK4 extends AbstractTrajectoryEnv
 	private boolean useInternalCPs = true;
 	
 	private HashMap<Integer,Integer> userCPReplacements = null;
+
+	@Override
+	public double getStoppageTime() { return stoppageTime; }
 
 	public void setUseInternalCriticalPoints(boolean value) {
 		this.useInternalCPs = value;
@@ -393,6 +397,7 @@ public abstract class TrajectoryEnvelopeTrackerRK4 extends AbstractTrajectoryEnv
 				integrateRK4(state, elapsedTrackingTime, deltaTime, slowingDown, MAX_VELOCITY, dampening, MAX_ACCELERATION);
 
 			}
+			else { stoppageTime += deltaTime; }
 			
 			//Do some user function on position update
 			onPositionUpdate();

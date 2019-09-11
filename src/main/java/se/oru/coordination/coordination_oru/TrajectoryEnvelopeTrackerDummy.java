@@ -26,7 +26,7 @@ public abstract class TrajectoryEnvelopeTrackerDummy extends AbstractTrajectoryE
 	 * @param te The {@link TrajectoryEnvelope} where the robot is parked.
 	 * @param timeStep The period at which the tracker should check whether it has "finished" parking. 
 	 * @param temporalResolution The temporal resolution in which the timeStep is expressed.
-	 * @param solver The {@link TrajectoryEnvelopeSolver} that maintains the parking {@link TrajectoryEnvelope}.
+	 * @param tec The {@link TrajectoryEnvelopeCoordinator} that maintains the parking {@link TrajectoryEnvelope}.
 	 * @param cb An optional callback that will be called during tracking.
 	 */
 	public TrajectoryEnvelopeTrackerDummy(TrajectoryEnvelope te, int timeStep, double temporalResolution, TrajectoryEnvelopeCoordinator tec, TrackingCallback cb) {
@@ -37,6 +37,9 @@ public abstract class TrajectoryEnvelopeTrackerDummy extends AbstractTrajectoryE
 		this.th = new Thread(this, "Parking tracker " + te.getComponent());
 		this.th.start();
 	}
+
+	@Override
+	public double getStoppageTime() { return 0.0; }
 	
 	@Override
 	public void onTrajectoryEnvelopeUpdate(TrajectoryEnvelope te) { }

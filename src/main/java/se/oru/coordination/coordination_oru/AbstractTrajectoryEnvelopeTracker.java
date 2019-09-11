@@ -165,6 +165,12 @@ public abstract class AbstractTrajectoryEnvelopeTracker {
 	 */
 	public abstract RobotReport getRobotReport();
 
+	/**
+	 * This method should return total stoppage time for a robot.
+	 * @return Time for which robot stopped at a critical point.
+	 */
+	public abstract double getStoppageTime();
+
 	protected void onPositionUpdate() {
 	
 		// Create an ArrayList. 
@@ -422,6 +428,6 @@ public abstract class AbstractTrajectoryEnvelopeTracker {
 	public TrajectoryEnvelope getTrajectoryEnvelope() {
 		return this.te;
 	}
-	
-	
+
+
 }
