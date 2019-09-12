@@ -138,6 +138,11 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 		return new RobotReport(te.getRobotID(), this.currentPose, this.currentPathIndex, this.currentSpeed, this.computeCurrentDistanceFromStart(), this.criticalPoint);
 	}
 
+	@Override
+	public double getStoppageTime() {
+		return stoppageTime;
+	}
+
 	public void delayIntegrationThread(int maxDelayInmillis) {
 		this.maxDelayInMilis = maxDelayInmillis;
 	}
