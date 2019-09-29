@@ -1070,9 +1070,9 @@ public abstract class TrajectoryEnvelopeCoordinator {
 	//returns true if robot1 should go before robot2
 	//returns false if robot2 should go before robot1
 	private boolean getOrder(AbstractTrajectoryEnvelopeTracker robotTracker1, RobotReport robotReport1, AbstractTrajectoryEnvelopeTracker robotTracker2, RobotReport robotReport2, CriticalSection cs) {
-		
-		if(this.isUncontrollable(robotTracker1.getTrajectoryEnvelope().getRobotID())) return true;
-		if(this.isUncontrollable(robotTracker2.getTrajectoryEnvelope().getRobotID())) return false;
+
+		//if(this.isUncontrollable(robotTracker1.getTrajectoryEnvelope().getRobotID())) return true;
+		//if(this.isUncontrollable(robotTracker2.getTrajectoryEnvelope().getRobotID())) return false;
 
 		synchronized (disallowedDependencies) {
 			for (Dependency dep : disallowedDependencies) {
