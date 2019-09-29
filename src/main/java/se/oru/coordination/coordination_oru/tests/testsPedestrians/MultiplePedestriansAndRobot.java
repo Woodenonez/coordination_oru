@@ -59,17 +59,17 @@ public class MultiplePedestriansAndRobot {
 		Coordinate footprint4 = new Coordinate(-0.1,-0.1);
 		
 		// Robot Footprints
-		Coordinate f1 = new Coordinate(0.3, 0.3);
-		Coordinate f2 = new Coordinate(0.3, -0.3);
-		Coordinate f3 = new Coordinate(-0.3, -0.3);
-		Coordinate f4 = new Coordinate(-0.3, 0.3);
+		// [[0.5, 0.2], [0.5, -0.2], [-0.2, -0.2], [-0.2, 0.2]]
+		Coordinate f1 = new Coordinate(0.5, 0.2);
+		Coordinate f2 = new Coordinate(0.5, -0.2);
+		Coordinate f3 = new Coordinate(-0.2, -0.2);
+		Coordinate f4 = new Coordinate(-0.2, 0.2);
 
 		//Need to setup infrastructure that maintains the representation
 		tec.setupSolver(0, 100000000);
 
-		String pedestrianPathDir = "paths_atc_10k_30";
 		ArrayList<Integer> nums = new ArrayList<>();
-
+		String pedestrianPathDir = "pedsim_testing_1-1";
 		// Filter names
 		FilenameFilter matchingNameFilter = new FilenameFilter() {
 			@Override
@@ -83,9 +83,15 @@ public class MultiplePedestriansAndRobot {
 			nums.add(Integer.parseInt(f.getName().split("person")[1].split(".txt")[0]));
 		}
 
-		JTSDrawingPanelVisualization viz = new JTSDrawingPanelVisualization();
-		//RVizVisualization viz = new RVizVisualization();
-		//RVizVisualization.writeRVizConfigFile(nums);
+		//JTSDrawingPanelVisualization viz = new JTSDrawingPanelVisualization();
+		RVizVisualization viz = new RVizVisualization();
+		viz.setMap("maps/pedsim_office.yaml");
+		int[] nums_primitive = new int[nums.size()];
+		for (int i=0; i < nums_primitive.length; i++)
+		{
+			nums_primitive[i] = nums.get(i).intValue();
+		}
+		//RVizVisualization.writeRVizConfigFile(nums_primitive);
 		//BrowserVisualization viz = new BrowserVisualization();
 		//viz.setInitialTransform(39, -1.8, 1.4);
 		tec.setVisualization(viz);
@@ -93,28 +99,26 @@ public class MultiplePedestriansAndRobot {
 		for(int i = 0; i < nums.size(); i++) {
 			
 			// Two robots. Others behave as pedestrians.
-			if (i != 1) {
+			if (nums.get(i) != 1729) {
 				tec.setFootprint(nums.get(i), footprint1, footprint2, footprint3, footprint4);
 				tec.addUncontrollableRobots(nums.get(i));
 				tec.setForwardModel(nums.get(i), new PedestrianForwardModel());
+
+				PedestrianTrajectory p1 = new PedestrianTrajectory(pedestrianPathDir + "/person" + nums.get(i) + ".txt");
+				tec.addPedestrianTrajectory(nums.get(i), p1);
+				tec.placeRobot(nums.get(i), p1.getPose(0));
+				Mission m1 = new Mission(nums.get(i), p1.getPoseSteeringAsArray());
+				tec.addMissions(m1);
 			}
 			else {
 				tec.setFootprint(nums.get(i), f1, f2, f3, f4);
 				tec.setForwardModel(nums.get(i), new ConstantAccelerationForwardModel(MAX_ACCEL, MAX_VEL, tec.getTrackingPeriod(), tec.getTemporalResolution()));
+				PoseSteering[] robotPath = Missions.loadPathFromFile(pedestrianPathDir + "/person1729.txt");
+				tec.placeRobot(nums.get(i), robotPath[0].getPose());
+				Mission m1 = new Mission(nums.get(i), robotPath);
+				tec.addMissions(m1);
 			}
-			
-			//PoseSteering[] path1 = Missions.loadPathFromFile(filename_prefix + nums.get(i) + ".txt");
-			PedestrianTrajectory p1 = new PedestrianTrajectory(pedestrianPathDir + "/person" + nums.get(i) + ".txt");
-			tec.addPedestrianTrajectory(nums.get(i), p1);
-			tec.placeRobot(nums.get(i), p1.getPose(0));
-			Mission m1 = new Mission(nums.get(i), p1.getPoseSteeringAsArray());
 
-			//Place robots in their initial locations (looked up in the data file that was loaded above)
-			// -- creates a trajectory envelope for each location, representing the fact that the robot is parked
-			// -- each trajectory envelope has a path of one pose (the pose of the location)
-			// -- each trajectory envelope is the footprint of the corresponding robot in that pose
-
-			tec.addMissions(m1);
 			Thread.sleep(200);
 		}
 		

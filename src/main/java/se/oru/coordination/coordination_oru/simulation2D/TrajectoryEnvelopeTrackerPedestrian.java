@@ -22,25 +22,24 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 
 	protected static final long WAIT_AMOUNT_AT_END = 3000;
 	protected static final double EPSILON = 0.01;
-	
-	protected double overallDistance = 0.0;
+
 	protected double totalDistance = 0.0;
-	
+
 	protected double elapsedTrackingTime = 0.0;
-	
+
 	protected Pose currentPose;
 	protected int currentPathIndex = 0;
 	protected double currentSpeed;
-	
+
 	protected double stoppageTime = 0.0;
 	protected double positionToStop = -1.0;
-	
+
 	protected PedestrianTrajectory pedestrianTraj;
-	
+
 	private Thread th = null;
 	private int maxDelayInMilis = 0;
 	private Random rand = new Random();
-	
+
 	public TrajectoryEnvelopeTrackerPedestrian(TrajectoryEnvelope te, int timeStep, double temporalResolution, TrajectoryEnvelopeCoordinator tec, TrackingCallback cb, PedestrianTrajectory pedestrianTraj) {
 		super(te, temporalResolution, tec, timeStep, cb);
 		this.pedestrianTraj = pedestrianTraj;
@@ -50,12 +49,12 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 		this.th = new Thread(this, "Pedestrian tracker " + te.getComponent());
 		this.th.setPriority(Thread.MAX_PRIORITY);
 	}
-	
+
 	@Override
 	public void onTrajectoryEnvelopeUpdate(TrajectoryEnvelope te) {
 		this.totalDistance = this.computeDistance(0, traj.getPose().length-1);
 	}
-	
+
 	@Override
 	public void startTracking() {
 		while (this.th == null) {
@@ -72,7 +71,7 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 		}
 		return ret;
 	}
-	
+
 	public double computeCurrentDistanceFromStart() {
 		double ret = 0.0;
 		for (int i = 0; i < currentPathIndex; i++) {
@@ -84,30 +83,30 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 	private double computeDistance(int startIndex, int endIndex) {
 		return computeDistance(this.traj, startIndex, endIndex);
 	}
-			
+
 	@Override
 	public void setCriticalPoint(int criticalPointToSet) {
-		
+		metaCSPLogger.warning("%%%%%%%% setCriticalPoint called for Pedestrian %%%%%%%%");
 		if (this.criticalPoint != criticalPointToSet) {
-			
+
 			//A new intermediate index to stop at has been given
-			if (criticalPointToSet != -1 && criticalPointToSet > getRobotReport().getPathIndex()) {			
+			if (criticalPointToSet != -1 && criticalPointToSet > getRobotReport().getPathIndex()) {
 				//Store backups in case we are too late for critical point
 				double totalDistanceBKP = this.totalDistance;
 				int criticalPointBKP = this.criticalPoint;
 				double positionToStopBKP = this.positionToStop;
-	
+
 				this.criticalPoint = criticalPointToSet;
-				this.totalDistance = computeDistance(0, criticalPointToSet);
-				
-				if (this.totalDistance < computeCurrentDistanceFromStart()) {
+				this.positionToStop = computeDistance(0, criticalPointToSet);
+
+				if (this.positionToStop < computeCurrentDistanceFromStart()) {
 					metaCSPLogger.warning("Ignored critical point (" + te.getComponent() + "): " + criticalPointToSet + " because stop distance (" + this.positionToStop +") < current distance (" + this.computeCurrentDistanceFromStart() + ")");
 					this.criticalPoint = criticalPointBKP;
 					this.totalDistance = totalDistanceBKP;
 					this.positionToStop = positionToStopBKP;
 				}
 				else {
-					metaCSPLogger.finest("Set critical point (" + te.getComponent() + "): " + criticalPointToSet + ", currently at point " + this.getRobotReport().getPathIndex() + ", distance " + this.computeCurrentDistanceFromStart() + ", will slow down at distance " + this.positionToStop);
+					metaCSPLogger.warning("Set critical point (" + te.getComponent() + "): " + criticalPointToSet + ", currently at point " + this.getRobotReport().getPathIndex() + ", distance " + this.computeCurrentDistanceFromStart() + ", will slow down at distance " + this.positionToStop);
 				}
 			}
 
@@ -115,22 +114,22 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 			else if (criticalPointToSet != -1 && criticalPointToSet <= getRobotReport().getPathIndex()) {
 				metaCSPLogger.warning("Ignored critical point (" + te.getComponent() + "): " + criticalPointToSet + " because robot is already at " + getRobotReport().getPathIndex() + " (and current CP is " + this.criticalPoint + ")");
 			}
-			
+
 			//The critical point has been reset, go to the end
 			else if (criticalPointToSet == -1) {
 				this.criticalPoint = criticalPointToSet;
-				this.totalDistance = computeDistance(0, traj.getPose().length-1);
+				this.positionToStop = computeDistance(0, traj.getPose().length-1);
 				metaCSPLogger.finest("Set critical point (" + te.getComponent() + "): " + criticalPointToSet);
 			}
 		}
-		
+
 		//Same critical point was already set
 		else {
 			metaCSPLogger.warning("Critical point (" + te.getComponent() + ") " + criticalPointToSet + " was already set!");
 		}
-		
+
 	}
-	
+
 	@Override
 	public RobotReport getRobotReport() {
 		if (this.currentPose == null) return null;
@@ -146,42 +145,42 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 	public void delayIntegrationThread(int maxDelayInmillis) {
 		this.maxDelayInMilis = maxDelayInmillis;
 	}
-	
-	protected void updatePedestrianState() {
-		
+
+	protected void updatePedestrianState(boolean stopping) {
+
 		// Time that has passed for the pedestrian is the tracking time that has elapsed minus the stoppageTime.
 		double timePassed = this.elapsedTrackingTime - this.stoppageTime;
-		
-		if(timePassed < this.pedestrianTraj.getTimeStamp(0)) { 
+
+		if(timePassed < this.pedestrianTraj.getTimeStamp(0) || stopping) {
 			currentSpeed = 0.0;
-			return; 
+			return;
 		}
-		
+
 		int index = 0;
 		while(timePassed > this.pedestrianTraj.getTimeStamp(index)) {
 			index++;
 			if(index == pedestrianTraj.size()) break;
 		}
-		
+
 		index = index - 1;
-		
+
 		this.currentPathIndex = index;
 		this.currentSpeed = this.pedestrianTraj.getSpeed(index);
-		
-		// Motion is over. 
-		if(index == this.pedestrianTraj.size() - 1) { 
+
+		// Motion is over.
+		if(index == this.pedestrianTraj.size() - 1) {
 			this.currentPose = this.pedestrianTraj.getPose(index);
 			return;
 		}
-		
+
 		// Interpolate the pose. TODO: Make use of the velocities in each direction as well
-		
+
 		double diffTime = timePassed - this.pedestrianTraj.getTimeStamp(index);
 		double deltaTime = this.pedestrianTraj.getTimeStamp(index + 1) - this.pedestrianTraj.getTimeStamp(index);
 		double ratio = diffTime / deltaTime;
 		this.currentPose = this.pedestrianTraj.getPose(index).interpolate(this.pedestrianTraj.getPose(index + 1), ratio);
 	}
-	
+
 	@Override
 	public void run() {
 		this.elapsedTrackingTime = 0.0;
@@ -189,12 +188,12 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 		boolean atCP = false;
 		int myRobotID = te.getRobotID();
 		int myTEID = te.getID();
-		
+
 		while (true) {
-						
-			//End condition: passed the middle AND velocity < 0 AND no criticalPoint 			
+
+			//End condition: passed the middle AND velocity < 0 AND no criticalPoint
 			boolean skipIntegration = false;
-			
+
 			if (computeCurrentDistanceFromStart() >= this.positionToStop && this.currentSpeed == 0.0) {
 				if (criticalPoint == -1 && !atCP) {
 					//set state to final position, just in case it didn't quite get there (it's certainly close enough)
@@ -203,36 +202,39 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 					ColorPrint.info("Tracking stops now.");
 					break;
 				}
-								
+
 				//Vel < 0 hence we are at CP, thus we need to skip integration
 				if (!atCP /*&& getRobotReport().getPathIndex() == criticalPoint*/) {
 					metaCSPLogger.info("At critical point (" + te.getComponent() + "): " + criticalPoint + " (" + getRobotReport().getPathIndex() + ")");
 					atCP = true;
-				}			
+				}
+				ColorPrint.positive("WAS OK");
 				skipIntegration = true;
 			}
 
 			//Compute deltaTime
 			long timeStart = Calendar.getInstance().getTimeInMillis();
-			
+
 			//Update the robot's state via RK4 numerical integration
 			if (!skipIntegration) {
 				if (atCP) {
 					metaCSPLogger.info("Resuming from critical point (" + te.getComponent() + ")");
 					atCP = false;
 				}
-				updatePedestrianState();
+				boolean stopping = false;
+				if(computeCurrentDistanceFromStart() >= this.positionToStop) {stopping = true;}
+				updatePedestrianState(stopping);
 			}
-			
+
 			//Do some user function on position update
 			onPositionUpdate();
-						
+
 			//Sleep for tracking period
 			int delay = trackingPeriodInMillis;
 			if (maxDelayInMilis > 0) delay += rand.nextInt(maxDelayInMilis);
 			try { Thread.sleep(delay); }
 			catch (InterruptedException e) { e.printStackTrace(); }
-			
+
 			//Advance time to reflect how much we have slept (~ trackingPeriod)
 			long deltaTimeInMillis = Calendar.getInstance().getTimeInMillis()-timeStart;
 			deltaTime = deltaTimeInMillis/this.temporalResolution;
@@ -240,7 +242,7 @@ public class TrajectoryEnvelopeTrackerPedestrian extends AbstractTrajectoryEnvel
 			// If we have skipped integration, add this to stoppage time.
 			if(skipIntegration)	this.stoppageTime += deltaTime;
 		}
-		
+
 		//persevere with last path point in case listeners didn't catch it!
 		long timerStart = getCurrentTimeInMillis();
 		while (getCurrentTimeInMillis()-timerStart < WAIT_AMOUNT_AT_END) {
