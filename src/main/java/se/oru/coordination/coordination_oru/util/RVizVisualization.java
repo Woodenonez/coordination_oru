@@ -226,6 +226,7 @@ public class RVizVisualization implements FleetVisualization, NodeMain {
 		if (mapFileName != null) {
 			try {
 				final OccupancyGrid occMap = node.getTopicMessageFactory().newFromType(OccupancyGrid._TYPE);
+				System.out.println("FileName was: " + mapFileName);
 				BufferedImage img = ImageIO.read(new File(mapFileName));
 				//img = toGrayScale(img);
 				img = toBlackAndWhite(img, 128);
@@ -240,8 +241,10 @@ public class RVizVisualization implements FleetVisualization, NodeMain {
 				occMap.getInfo().setHeight((int)(img.getHeight()));
 				occMap.getInfo().setWidth((int)(img.getWidth()));
 				geometry_msgs.Pose pose = node.getTopicMessageFactory().newFromType(geometry_msgs.Pose._TYPE);
-				pose.getPosition().setX(0);
-				pose.getPosition().setY(0);
+				String origin = Missions.getProperty("origin", mapYAMLFile);
+				String[] originStrings = origin.replaceAll("\\[", "").replaceAll("\\]", "").split(",");
+				pose.getPosition().setX(Double.parseDouble(originStrings[0]));
+				pose.getPosition().setY(Double.parseDouble(originStrings[1]));
 				occMap.getInfo().setOrigin(pose);
 				double res = Double.parseDouble(Missions.getProperty("resolution", mapYAMLFile));
 				occMap.getInfo().setResolution((float)res);
