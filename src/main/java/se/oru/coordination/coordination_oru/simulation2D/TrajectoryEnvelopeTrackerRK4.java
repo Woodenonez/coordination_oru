@@ -397,7 +397,6 @@ public abstract class TrajectoryEnvelopeTrackerRK4 extends AbstractTrajectoryEnv
 				integrateRK4(state, elapsedTrackingTime, deltaTime, slowingDown, MAX_VELOCITY, dampening, MAX_ACCELERATION);
 
 			}
-			else { stoppageTime += deltaTime; }
 			
 			//Do some user function on position update
 			onPositionUpdate();
@@ -412,6 +411,8 @@ public abstract class TrajectoryEnvelopeTrackerRK4 extends AbstractTrajectoryEnv
 			long deltaTimeInMillis = Calendar.getInstance().getTimeInMillis()-timeStart;
 			deltaTime = deltaTimeInMillis/this.temporalResolution;
 			elapsedTrackingTime += deltaTime;
+			// If we have skipped integration, add this to stoppage time.
+			if(skipIntegration)	this.stoppageTime += deltaTime;
 		}
 		
 		//persevere with last path point in case listeners didn't catch it!
