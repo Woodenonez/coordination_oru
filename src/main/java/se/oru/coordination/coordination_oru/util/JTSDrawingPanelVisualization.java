@@ -15,23 +15,67 @@ import org.metacsp.utility.UI.JTSDrawingPanel;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
+// import com.vividsolutions.jts.geom.Point;
+// import com.vividsolutions.jts.geom.Polygon;
 
 import se.oru.coordination.coordination_oru.RobotReport;
 import se.oru.coordination.coordination_oru.TrajectoryEnvelopeCoordinator;
 
+// used for save images (Zed, CTH)
+import java.io.File;
+import javax.imageio.ImageIO;
+import javax.swing.JPanel;
+import java.awt.image.BufferedImage;
+import java.awt.Robot;
+import java.awt.Graphics2D;
+import java.awt.AWTException;
+
 public class JTSDrawingPanelVisualization implements FleetVisualization {
 
 	private JTSDrawingPanel panel = null;
+	private boolean saveImage = false; // (Zed, CTH)
+	private String imgType = "png"; // (Zed, CTH)
+
+	public int pathCNT = 0;
+
+	/**
+	 * This function is used to save the screenshot of the panel.
+	 * @param panel
+	 * @author Zed, CTH
+	 */
+	protected void saveImage(JPanel panel) {
+		String imgtype = "png";
+		this.saveImage(panel, imgtype, "test."+imgtype);
+	}
+	private void saveImage(JPanel panel, String imgType, String imgName) {
+		BufferedImage imageBuf = null;
+		try {
+			imageBuf = new Robot().createScreenCapture(panel.getBounds());
+		} catch (AWTException e1) {
+			e1.printStackTrace();
+		}
+		Graphics2D graphics2d = imageBuf.createGraphics();
+		panel.paint(graphics2d);
+		try {
+			ImageIO.write(imageBuf, imgType, new File(imgName+'.'+imgType));
+		} catch (Exception e) {
+			System.out.println("Error saving!");
+		}
+	} // end save images
 
 	public JTSDrawingPanelVisualization() {
 		this(null);
 	}
-	
 	public JTSDrawingPanelVisualization(String mapYAMLFile) {
-		this.setupGUI(mapYAMLFile);
+		this.setupGUI(mapYAMLFile, true); // (Zed, CTH)
 	}
+	public JTSDrawingPanelVisualization(String mapYAMLFile, boolean showText) {
+		this.setupGUI(mapYAMLFile, showText);
+	} // (Zed, CTH)
+	public JTSDrawingPanelVisualization(String mapYAMLFile, boolean showText, boolean saveImg) {
+		this.saveImage = saveImg;
+		this.setupGUI(mapYAMLFile, showText);
+	} // (Zed, CTH)
 	
 	public JTSDrawingPanel getPanel() {
 		return this.panel;
@@ -48,13 +92,35 @@ public class JTSDrawingPanelVisualization implements FleetVisualization {
 		double y = rr.getPose().getY();
 		double theta = rr.getPose().getTheta();
 		String name = "R"+te.getRobotID();
+		int idx = rr.getPathIndex(); // (Zed, CTH)
+		double dist = rr.getDistanceTraveled(); // (Zed, CTH)
+		String color = "#FF0000"; // red - for buzy/target
 		if (extraStatusInfo != null) {
 			for (String st : extraStatusInfo) {
 				name += ("\\"+st);
 			}
 		}
-		if (rr.getPathIndex() != -1) panel.addGeometry(name, TrajectoryEnvelope.getFootprint(te.getFootprint(), x, y, theta), false, true, false, "#FF0000");
-		else panel.addGeometry(name, TrajectoryEnvelope.getFootprint(te.getFootprint(), te.getTrajectory().getPose()[0].getX(), te.getTrajectory().getPose()[0].getY(), te.getTrajectory().getPose()[0].getTheta()), false, true, false, "#4286F4");
+		if (idx == -1) {
+			x = te.getTrajectory().getPose()[0].getX();
+			y = te.getTrajectory().getPose()[0].getY();
+			theta = te.getTrajectory().getPose()[0].getTheta();
+			color = "#4286F4"; // blue - for idle/obstacle
+		}
+		panel.addGeometry(name,
+						  TrajectoryEnvelope.getFootprint(te.getFootprint(), x, y, theta), 
+						  false, true, false, color); // add the robot
+
+		if (idx != -1 && this.saveImage) { // (Zed, CTH)
+			String pathName = new SimpleDateFormat("dd").format(new Date());
+			pathName = "record/"+pathName+'_'+name+'_'+Integer.toString(this.pathCNT)+'/';
+			String imgName = name+"_"+Double.toString(dist)
+								 +"_x"+Double.toString(x)+"_y"+Double.toString(y);
+			if (!new File(pathName).exists()) {
+				new File(pathName).mkdirs();
+			}
+			this.saveImage(this.panel, this.imgType, pathName+imgName);
+		}
+		
 	}
 
 	@Override
@@ -62,14 +128,16 @@ public class JTSDrawingPanelVisualization implements FleetVisualization {
 		panel.addArrow(dependencyDescriptor, rrWaiting.getPose(), rrDriving.getPose());
 	}
 	
-	private void setupGUI(String mapYAMLFile) {
+	private void setupGUI(String mapYAMLFile, boolean showText) {
 		//Show everything in a GUI (vehicle positions are updated in real time by the trackers, see below)
 		this.panel = JTSDrawingPanel.makeEmpty("Current status of robots");
 		//setPriorityOfEDT(Thread.MIN_PRIORITY);
 		//setPriorityOfEDT(Thread.MAX_PRIORITY);
-		panel.setSmoothTransitions(true);
+		panel.setSmoothTransitions(false);
+		panel.setZoomIntensity(0.01);
 		panel.setArrowHeadSizeInMeters(0.6*TrajectoryEnvelopeCoordinator.MAX_DEFAULT_FOOTPRINT_DIMENSION);
-		panel.setTextSizeInMeters(0.8*TrajectoryEnvelopeCoordinator.MAX_DEFAULT_FOOTPRINT_DIMENSION);
+		if (!showText) panel.setTextSizeInMeters(0); // (Zed, CTH)
+		else panel.setTextSizeInMeters(0.8*TrajectoryEnvelopeCoordinator.MAX_DEFAULT_FOOTPRINT_DIMENSION);
 		//System.out.println("TEXT SIZE IN METERS IS " + 0.5*getMaxFootprintDimension(1));
 		if (mapYAMLFile != null) panel.setMap(mapYAMLFile);
 		panel.addKeyListener(new KeyListener() {

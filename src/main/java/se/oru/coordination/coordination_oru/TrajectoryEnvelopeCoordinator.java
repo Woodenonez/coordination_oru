@@ -58,6 +58,8 @@ import se.oru.coordination.coordination_oru.util.Pair;
  */
 public abstract class TrajectoryEnvelopeCoordinator {
 
+	public boolean showEnvelope = true; //Zed 20191130 CTH
+
 	public static String TITLE = "coordination_oru - Online coordination for multiple robots";
 	public static String COPYRIGHT = "Copyright \u00a9 2017-2018 Federico Pecora";
 
@@ -1651,7 +1653,7 @@ public abstract class TrajectoryEnvelopeCoordinator {
 				}
 			}
 			
-			if (viz != null) {
+			if (viz != null & showEnvelope) {
 				viz.addEnvelope(newTE);
 			}
 			
@@ -2052,7 +2054,7 @@ public abstract class TrajectoryEnvelopeCoordinator {
 					@Override
 					public void onTrackingStart() {
 						if (trackingCallbacks.containsKey(myTE.getRobotID())) trackingCallbacks.get(myTE.getRobotID()).onTrackingStart();
-						if (viz != null) viz.addEnvelope(myTE);
+						if (viz != null & showEnvelope) viz.addEnvelope(myTE);
 					}
 
 					@Override
