@@ -112,7 +112,8 @@ public class JTSDrawingPanelVisualization implements FleetVisualization {
 
 		if (idx != -1 && this.saveImage) { // (Zed, CTH)
 			String pathName = new SimpleDateFormat("dd").format(new Date());
-			pathName = "record/"+pathName+'_'+name+'_'+Integer.toString(this.pathCNT)+'/';
+			pathName = "/home/Append/Data/CORUSD/"+pathName+'_'+name+'_'+Integer.toString(this.pathCNT)+'/';
+			// pathName = "record/"+pathName+'_'+name+'_'+Integer.toString(this.pathCNT)+'/';
 			String imgName = name+"_"+Double.toString(dist)
 								 +"_x"+Double.toString(x)+"_y"+Double.toString(y);
 			if (!new File(pathName).exists()) {

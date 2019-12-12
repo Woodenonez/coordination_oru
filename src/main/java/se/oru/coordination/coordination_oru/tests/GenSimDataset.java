@@ -61,17 +61,17 @@ public abstract class GenSimDataset {
 		
 		// *********************** Customize 2 ***********************
 		boolean readPathFromFile = false;
-		boolean saveImg = false;
-		boolean showEnvelope = true;
-		boolean showNumber = true;
+		boolean saveImg = true;
+		boolean showEnvelope = false;
+		boolean showNumber = false;
 		String pathFile = "paths/aTest_path.txt"; // "pathPoint+robotID"
 		String yamlFile = "maps/mapTest1.yaml"; // map name and properties
 		Integer[] robotIDs = new Integer[] {1};
-		int max_iter = 10; // if -1, then infinite
+		int max_iter = 100; // if -1, then infinite
 
-		char[] pathPoints = {'a','b'};
+		char[] pathPoints = {'a','b'}; // if read path from file
 		Pose startRobot1 = new Pose( 5.5, 42.5, Math.PI/4);
-		Pose goalRobot1  = new Pose(32.0, 24.0, 5*Math.PI/4);
+		// Pose goalRobot1  = new Pose(32.0, 24.0, 5*Math.PI/4);
 
 		Missions.loadLocationAndPathData(pathFile); // test_poses
 		String mapFile = "maps/"+Missions.getProperty("image", yamlFile);
@@ -126,6 +126,7 @@ public abstract class GenSimDataset {
 
 						if (onMission==0) {
 							if (!readPathFromFile) {
+								Pose goalRobot1  = new Pose(32.0, 24.0, 5*Math.PI/4);
 								rsp.setStart(startRobot1);
 								rsp.setGoals(goalRobot1);
 								rsp.plan();
@@ -156,6 +157,7 @@ public abstract class GenSimDataset {
 						//Sleep for a little (original 2 sec)
 						try { Thread.sleep(500); }
 						catch (InterruptedException e) { e.printStackTrace(); }
+						System.out.println("*****"+iteration+"/"+max_iter+"*****");
 						if (iteration==max_iter & max_iter!=-1) {
 							exit = true;
 						}
