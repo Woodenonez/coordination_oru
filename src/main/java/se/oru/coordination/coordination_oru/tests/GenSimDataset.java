@@ -61,13 +61,13 @@ public abstract class GenSimDataset {
 		
 		// *********************** Customize 2 ***********************
 		boolean readPathFromFile = false;
-		boolean saveImg = true;
+		boolean saveImg = false;
 		boolean showEnvelope = false;
 		boolean showNumber = false;
 		String pathFile = "paths/aTest_path.txt"; // "pathPoint+robotID"
 		String yamlFile = "maps/mapTest1.yaml"; // map name and properties
 		Integer[] robotIDs = new Integer[] {1};
-		int max_iter = 100; // if -1, then infinite
+		int max_iter = 10; // if -1, then infinite
 
 		char[] pathPoints = {'a','b'}; // if read path from file
 		Pose startRobot1 = new Pose( 5.5, 42.5, Math.PI/4);
