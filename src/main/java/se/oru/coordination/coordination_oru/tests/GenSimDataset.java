@@ -66,12 +66,16 @@ public abstract class GenSimDataset {
 		boolean showNumber = false;
 		String pathFile = "paths/aTest_path.txt"; // "pathPoint+robotID"
 		String yamlFile = "maps/mapTest1.yaml"; // map name and properties
-		Integer[] robotIDs = new Integer[] {1};
+		Integer[] robotIDs = new Integer[] {1,2}; // only 1 is the target
 		int max_iter = 10; // if -1, then infinite
 
 		char[] pathPoints = {'a','b'}; // if read path from file
-		Pose startRobot1 = new Pose( 5.5, 42.5, Math.PI/4);
-		// Pose goalRobot1  = new Pose(32.0, 24.0, 5*Math.PI/4);
+		Pose startRobot1 = new Pose(5.5, 42.5, Math.PI/4);
+		Pose startRobot2 = new Pose(32, 42.5, Math.PI);
+		Pose[] startRobot = {startRobot1, startRobot2};
+		Pose goalRobot1 = new Pose(32.0, 24.0, 5*Math.PI/4);
+		Pose goalRobot2 = startRobot2;
+		Pose[] goalRobot = {goalRobot1, goalRobot2};
 
 		Missions.loadLocationAndPathData(pathFile); // test_poses
 		String mapFile = "maps/"+Missions.getProperty("image", yamlFile);
@@ -94,7 +98,7 @@ public abstract class GenSimDataset {
 		tec.setupSolver(0, 100000000);
  
 		tec.setUseInternalCriticalPoints(false);
-		tec.setYieldIfParking(false);
+		tec.setYieldIfParking(false); // if a robot parking in CS should yield for others
 
 		//Path planner: ReedsShepp
 		ReedsSheppCarPlanner rsp = new ReedsSheppCarPlanner();
@@ -126,9 +130,8 @@ public abstract class GenSimDataset {
 
 						if (onMission==0) {
 							if (!readPathFromFile) {
-								Pose goalRobot1  = new Pose(32.0, 24.0, 5*Math.PI/4);
-								rsp.setStart(startRobot1);
-								rsp.setGoals(goalRobot1);
+								rsp.setStart(startRobot[robotID-1]);
+								rsp.setGoals(goalRobot[robotID-1]);
 								rsp.plan();
 								Missions.enqueueMission(new Mission(robotID,rsp.getPath()));
 							}

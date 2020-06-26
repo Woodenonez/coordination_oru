@@ -2314,10 +2314,10 @@ public abstract class TrajectoryEnvelopeCoordinator {
 			ArrayList<String> ret = new ArrayList<String>();
 			int numVar = solver.getConstraintNetwork().getVariables().length;
 			int numCon = solver.getConstraintNetwork().getConstraints().length;
-			ret.add("Status @ "  + getCurrentTimeInMillis() + " ms");
+			// ret.add("Status @ "  + getCurrentTimeInMillis() + " ms");
 
-			ret.add(CONNECTOR_BRANCH + "Eff period ..... " + EFFECTIVE_CONTROL_PERIOD + " ms");
-			ret.add(CONNECTOR_BRANCH + "Network ........ " + numVar + " variables, " + numCon + " constriants");
+			// ret.add(CONNECTOR_BRANCH + "Eff period ..... " + EFFECTIVE_CONTROL_PERIOD + " ms");
+			// ret.add(CONNECTOR_BRANCH + "Network ........ " + numVar + " variables, " + numCon + " constriants");
 			HashSet<Integer> allRobots = new HashSet<Integer>();
 			for (Integer robotID : trackers.keySet()) {
 				allRobots.add(robotID);
@@ -2332,7 +2332,7 @@ public abstract class TrajectoryEnvelopeCoordinator {
 				else st += " (D)";
 				st += ": " + currentPP + "   ";
 			}
-			ret.add(st);
+			// ret.add(st);
 			synchronized (currentDependencies) {
 				if (checkCollisions) {
 					ret.add(CONNECTOR_BRANCH + "Dependencies ... " + currentDependencies);
